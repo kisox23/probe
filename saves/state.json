@@ -1,0 +1,12 @@
+{
+  "current_id": 3,
+  "current_planet": 3,
+  "fuel": 40,
+  "vigor": 100,
+  "inventory": {
+    "materials": {},
+    "elements": {},
+    "misc": {},
+    "utils": {}
+  }
+}

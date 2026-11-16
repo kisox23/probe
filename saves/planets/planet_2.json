@@ -1,0 +1,23 @@
+{
+  "id": 2,
+  "name": "Rastatexe Safalbil",
+  "class": "Lush",
+  "climate": "Corrosive",
+  "temperature": 72,
+  "elements": {
+    "Argon": 3.1560671,
+    "Hydrogen": 14.893495,
+    "Silicon": 21.292091,
+    "Titanium": 11.736337,
+    "Helium": 9.036696,
+    "Uranium": 10.70548,
+    "Nitrogen": 5.2174015,
+    "Iron": 23.962427
+  },
+  "materials": [
+    "Fiber",
+    "Oil",
+    "Dust"
+  ],
+  "inhabitated": false
+}

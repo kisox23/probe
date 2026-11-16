@@ -1,0 +1,24 @@
+{
+  "id": 3,
+  "name": "Wolek Aikara",
+  "class": "Lush",
+  "climate": "Littoral",
+  "temperature": 27,
+  "elements": {
+    "Uranium": 4.9589863,
+    "Helium": 15.501688,
+    "Silicon": 19.004099,
+    "Argon": 1.5487567,
+    "Iron": 22.149921,
+    "Nitrogen": 10.034539,
+    "Titanium": 13.358873,
+    "Hydrogen": 13.443138
+  },
+  "materials": [
+    "Wood",
+    "Stone",
+    "Dust",
+    "Plastic"
+  ],
+  "inhabitated": true
+}

@@ -1,0 +1,16 @@
+{
+  "id": 0,
+  "name": "Earth",
+  "class": "Lush",
+  "climate": "Unsettled",
+  "temperature": 25,
+  "elements": {},
+  "materials": [
+    "Fiber",
+    "Oil",
+    "Wood",
+    "Stone",
+    "Dust"
+  ],
+  "inhabitated": true
+}
