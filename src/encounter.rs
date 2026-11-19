@@ -1,10 +1,14 @@
 use colored::Colorize;
-use rand::{random_range, seq::IndexedRandom};
+use rand::seq::IndexedRandom;
 
 use crate::{
-    input_command,
+    ascii_art::{
+        INHABITANT_STANDING, INHABITANT_TELLING, PLANET, PLANET_INHABITATED, clear_and_render,
+    },
+    classify, input_command,
+    item::{ELEMENTS, Element, Item, MATERIALS, Material},
+    language::Intent,
     models::{GameState, Planet},
-    planet_generator::{ELEMENTS, Element, Item, MATERIALS, Material},
     word_generator,
 };
 
@@ -21,43 +25,63 @@ pub fn talk(gs: &mut GameState, planet: &Planet) {
         return;
     }
 
+    clear_and_render(INHABITANT_STANDING);
     let name = word_generator::make_name(rand::random_range(2..4), true);
     println!("You met the inhabitant {}.", name.yellow());
     loop {
-        println!("What do you want do to?");
-        let act = input_command("? > ");
-        match act.as_str() {
-            "t" | "trade" => {
+        println!("What do you have to say?");
+        let sentence = input_command("? > ");
+        if sentence.len() < 3 {
+            println!("Can't you express yourself?");
+            continue;
+        }
+        let intent = classify(sentence.as_str());
+        match intent {
+            Intent::Trade => {
                 trade(gs);
                 continue;
             }
-            "a" | "ask" => {
+            Intent::Ask => {
                 ask(planet);
                 continue;
             }
-            "b" | "back" => return,
-            "" => {}
-            _ => {}
+            Intent::Greet => {
+                println!("Hello there, stranger. What do you need?");
+                continue;
+            }
+            Intent::Bye => {
+                break;
+            }
         }
+    }
+
+    if planet.inhabitated {
+        clear_and_render(PLANET_INHABITATED);
+    } else {
+        clear_and_render(PLANET);
     }
 }
 
 fn trade(gs: &mut GameState) {
+    clear_and_render(INHABITANT_TELLING);
+
     let mut rng = rand::rng();
     let trade: Trade;
     let kind = rand::random_bool(0.5);
 
     if kind {
+        let elements: Vec<&Element> = ELEMENTS.sample(&mut rng, 2).collect();
         trade = Trade {
-            item_received: Item::Ele(ELEMENTS.choose(&mut rng).unwrap().clone()),
-            item_given: Item::Ele(ELEMENTS.choose(&mut rng).unwrap().clone()),
+            item_received: Item::Ele(elements[0].clone()),
+            item_given: Item::Ele(elements[1].clone()),
             qty_received: rand::random_range(1..3),
             qty_given: rand::random_range(1..3),
         };
     } else {
+        let materials: Vec<&Material> = MATERIALS.sample(&mut rng, 2).collect();
         trade = Trade {
-            item_received: Item::Mat(MATERIALS.choose(&mut rng).unwrap().clone()),
-            item_given: Item::Mat(MATERIALS.choose(&mut rng).unwrap().clone()),
+            item_received: Item::Mat(materials[0].clone()),
+            item_given: Item::Mat(materials[1].clone()),
             qty_received: rand::random_range(1..3),
             qty_given: rand::random_range(1..3),
         };
@@ -74,19 +98,18 @@ fn trade(gs: &mut GameState) {
 
         match act.trim() {
             "y" | "yes" => {
-                if !gs.inventory.get_qty(&trade.item_given) >= trade.qty_given {
+                if gs.inventory.get_qty(&trade.item_given) < trade.qty_given {
                     println!("{}", "You don't have the goods requested.".red());
-                    continue;
+                    break;
                 }
                 gs.inventory
                     .update_item(&trade.item_given, -trade.qty_given);
                 gs.inventory
                     .update_item(&trade.item_received, trade.qty_given);
                 println!("{}", "You got a deal!".blue());
-                continue;
+                break;
             }
             "n" | "no" => {
-                println!("Bye bye, then.");
                 return;
             }
             &_ => {
@@ -98,15 +121,23 @@ fn trade(gs: &mut GameState) {
 
 fn ask(planet: &Planet) {
     let mut result: Vec<String> = Vec::new();
-    for (i, elem) in planet.elements.iter().enumerate() {
+    for (_i, elem) in planet.elements.iter().enumerate() {
         if *elem.1 >= 15.0 {
             result.push(elem.0.to_string());
         }
     }
 
     print!("I'm pretty sure you can find ");
-    for x in result {
+    let cnt = result.len();
+    for (i, x) in result.iter().enumerate() {
+        if i == cnt - 1 {
+            print!("{} ", x);
+            continue;
+        }
         print!("{}, ", x);
+    }
+    if result.is_empty() {
+        print!("nothing ");
     }
     print!("here.\n");
 }

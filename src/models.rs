@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::inventory::Inventory;
-use crate::planet_generator::Element;
-use crate::planet_generator::Material;
-use crate::planet_generator::Util;
+use crate::{
+    inventory::Inventory,
+    item::{Element, Material, Util},
+};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Planet {
@@ -23,6 +23,7 @@ pub struct Planet {
 pub struct GameState {
     pub current_id: u64,
     pub current_planet: u64,
+    pub current_name: String,
     pub fuel: i32,
     pub vigor: i32,
     pub inventory: Inventory,
@@ -46,8 +47,16 @@ impl GameState {
                 self.fuel = 100;
             }
             Util::Fruit => {
+                if self.vigor == 100 {
+                    println!("You're strong and vigorous!");
+                    return;
+                }
                 *self.inventory.utils.get_mut(&item).unwrap() -= 1;
-                self.vigor += 20
+                self.vigor += 20;
+            }
+            Util::Harvester => {
+                println!("Can't use this now");
+                return;
             }
         }
     }

@@ -1,0 +1,24 @@
+{
+  "id": 1,
+  "name": "Canaea-X",
+  "class": "Moon",
+  "climate": "Nordic",
+  "temperature": -74,
+  "elements": {
+    "Silicon": 17.60243,
+    "Hydrogen": 21.324747,
+    "Uranium": 2.4060645,
+    "Argon": 1.9348377,
+    "Nitrogen": 23.19354,
+    "Titanium": 6.787502,
+    "Helium": 15.213702,
+    "Iron": 11.537181
+  },
+  "materials": [
+    "Wood",
+    "Fiber",
+    "Oil",
+    "Plastic"
+  ],
+  "inhabitated": false
+}

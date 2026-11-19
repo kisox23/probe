@@ -1,16 +1,10 @@
-use std::collections::HashMap;
-use std::fmt;
-use std::fmt::write;
-
 use rand::prelude::*;
-use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
 
+use crate::item::{Element, Material};
 use crate::models::Planet;
-use crate::planet_generator::Element::*;
-use crate::planet_generator::Material::*;
-use crate::word_generator;
+use crate::word_generator::NameGenerator;
 
 const HOT_CLIMATE: &[&str] = &[
     "Acid",
@@ -49,96 +43,16 @@ const CLASSES: &[&str] = &[
     "Moon",
 ];
 
-pub const ELEMENTS: &[Element] = &[
-    Iron, Titanium, Silicon, Uranium, Hydrogen, Helium, Nitrogen, Argon,
-];
-
-pub const MATERIALS: &[Material] = &[Wood, Fiber, Oil, Stone, Dust, Plastic];
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash)]
-pub enum Item {
-    Mat(Material),
-    Ele(Element),
-    Misc(SpaceFinding),
-    Uti(Util),
-}
-
-impl fmt::Display for Item {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            Item::Mat(m) => write!(f, "{:?}", m),
-            Item::Ele(e) => write!(f, "{:?}", e),
-            Item::Misc(misc) => write!(f, "{:?}", misc),
-            Item::Uti(u) => write!(f, "{:?}", u),
-        }
-    }
-}
-
-#[derive(Debug, EnumIter, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
-pub enum Material {
-    Wood,
-    Fiber,
-    Oil,
-    Stone,
-    Dust,
-    Plastic,
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
-pub enum Util {
-    Canister,
-    Fruit,
-}
-
-impl fmt::Display for Util {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl fmt::Display for Material {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl fmt::Display for Element {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-impl fmt::Display for SpaceFinding {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:?}", self)
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone)]
-pub enum Element {
-    Iron,
-    Titanium,
-    Silicon,
-    Uranium,
-
-    Hydrogen,
-    Helium,
-    Nitrogen,
-    Argon,
-}
-
-#[derive(Debug, Serialize, Deserialize, Hash, Eq, PartialEq, Clone)]
-pub enum SpaceFinding {
-    Capsule,
-    Wire,
-    Letter,
-}
-
-pub fn generate(next_id: u64) -> Planet {
+pub fn generate(next_id: u64, name_gen: &NameGenerator) -> Planet {
     let mut rng = rand::rng();
-    let name = word_generator::make_name(rand::random_range(2..8), false);
+    // deprecated -> let name = word_generator::make_name(rand::random_range(2..8), false);
+    let name = name_gen.make_name(rand::random_range(1..=6));
     let class = CLASSES.choose(&mut rng).unwrap();
-    let inhabitated = rand::random_bool(0.08);
+    let inhabitated = if *class == "Lifeless" {
+        false
+    } else {
+        rand::random_bool(0.1)
+    };
 
     let materials = generate_materials();
 

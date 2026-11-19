@@ -1,6 +1,6 @@
 use crate::inventory::Inventory;
+use crate::item::Material::*;
 use crate::models::{GameState, Planet};
-use crate::planet_generator::Material::*;
 use std::collections::HashMap;
 use std::fs;
 use std::io;
@@ -30,8 +30,9 @@ pub fn load() -> GameState {
         return GameState {
             current_id: 0,
             current_planet: 0,
+            current_name: String::from("Earth"),
             fuel: 100,
-            vigor: 0,
+            vigor: 100,
             inventory,
         };
     }
@@ -62,6 +63,7 @@ pub fn erase_all() {
     let state = GameState {
         current_id: 0,
         current_planet: 0,
+        current_name: String::from("Earth"),
         fuel: 100,
         vigor: 100,
         inventory,

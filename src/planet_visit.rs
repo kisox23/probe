@@ -1,27 +1,37 @@
-use rand::seq::IndexedRandom;
+use std::str::FromStr;
+
+use rand::{random_bool, seq::IndexedRandom};
 
 use colored::Colorize;
 
 use crate::{
+    ascii_art::{PLANET, PLANET_INHABITATED, clear_and_render},
     encounter::talk,
     input_command,
-    models::{GameState, Planet},
-    planet_generator::{
+    item::{
         Element, Item,
         Util::{self, Fruit},
     },
+    models::{GameState, Planet},
     storage::get_current_planet,
 };
 
 pub fn visit_planet(gs: &mut GameState) {
     let planet = get_current_planet(gs);
+
+    if planet.inhabitated {
+        clear_and_render(PLANET_INHABITATED);
+    } else {
+        clear_and_render(PLANET);
+    }
     println!("=== WELCOME TO {} ===", planet.name);
+
     loop {
         println!("What do you feel up to?");
         let cmd = input_command("Planet >>> ");
         match cmd.as_str() {
-            "h" | "harvest" => harvest_material(gs, &planet),
-            "r" | "retrieve" => retrieve_element(gs, &planet),
+            "r" | "retrieve" => retrieve_material(gs, &planet),
+            "h" | "harvest" => harvest_element(gs, &planet),
             "t" | "talk" => talk(gs, &planet),
             "b" | "back" => return,
             _ => {
@@ -32,11 +42,17 @@ pub fn visit_planet(gs: &mut GameState) {
     }
 }
 
-fn harvest_material(gs: &mut GameState, planet: &Planet) {
+fn retrieve_material(gs: &mut GameState, planet: &Planet) {
     if planet.materials.is_empty() {
         println!("{}", "This planet has nothing to offer.".bright_yellow());
         return;
     }
+
+    if !tire(gs, planet) {
+        println!("{}", "You're too tired for this now.".red());
+        return;
+    }
+
     let mut rng = rand::rng();
     if let Some(loot) = planet.materials.choose(&mut rng) {
         gs.inventory.update_item(&Item::Mat(loot.clone()), 1);
@@ -47,11 +63,16 @@ fn harvest_material(gs: &mut GameState, planet: &Planet) {
         }
         println!("Found {}{}", loot.to_string(), add);
     }
-    tire(gs, planet);
 }
 
-fn retrieve_element(gs: &mut GameState, planet: &Planet) {
+fn harvest_element(gs: &mut GameState, planet: &Planet) {
     if !tire(gs, planet) {
+        println!("{}", "You're too tired for this now.".red());
+        return;
+    }
+
+    if gs.inventory.get_qty(&Item::Uti(Util::Harvester)) == 0 {
+        println!("You need a Harvester.");
         return;
     }
 
@@ -60,6 +81,12 @@ fn retrieve_element(gs: &mut GameState, planet: &Planet) {
 
     if let Ok((loot, _)) = entries.choose_weighted(&mut rng, |&(_, pct)| *pct) {
         gs.inventory.update_item(&Item::Ele((*loot).clone()), 1);
+        println!("You managed to get some {}.", loot.to_string());
+    }
+
+    if random_bool(0.05) {
+        gs.inventory.update_item(&Item::Uti(Util::Harvester), -1);
+        println!("{}", "Your harvester broke!".yellow());
     }
 }
 
@@ -69,7 +96,6 @@ fn tire(gs: &mut GameState, planet: &Planet) -> bool {
             gs.vigor -= 20;
             return true;
         } else {
-            println!("{}", "You're too tired for this now.".red());
             return false;
         }
     } else {
@@ -77,7 +103,6 @@ fn tire(gs: &mut GameState, planet: &Planet) -> bool {
             gs.vigor -= 10;
             return true;
         } else {
-            println!("{}", "You have no energy now.".red());
             return false;
         }
     }

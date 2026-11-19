@@ -1,24 +1,23 @@
 {
   "id": 1,
-  "name": "Zelowwo Fishiwa",
+  "name": "Canaea-X",
   "class": "Moon",
-  "climate": "Polar",
-  "temperature": -9,
+  "climate": "Nordic",
+  "temperature": -74,
   "elements": {
-    "Titanium": 10.754135,
-    "Silicon": 18.537466,
-    "Helium": 16.39657,
-    "Nitrogen": 13.276301,
-    "Argon": 2.735417,
-    "Uranium": 1.1391279,
-    "Hydrogen": 14.274915,
-    "Iron": 22.886066
+    "Silicon": 17.60243,
+    "Hydrogen": 21.324747,
+    "Uranium": 2.4060645,
+    "Argon": 1.9348377,
+    "Nitrogen": 23.19354,
+    "Titanium": 6.787502,
+    "Helium": 15.213702,
+    "Iron": 11.537181
   },
   "materials": [
     "Wood",
     "Fiber",
     "Oil",
-    "Stone",
     "Plastic"
   ],
   "inhabitated": false

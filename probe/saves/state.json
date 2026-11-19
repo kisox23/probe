@@ -1,0 +1,30 @@
+{
+  "current_id": 3,
+  "current_planet": 0,
+  "current_name": "Earth",
+  "fuel": 100,
+  "vigor": 0,
+  "inventory": {
+    "materials": {
+      "Oil": 9,
+      "Wood": 10,
+      "Stone": 20,
+      "Fiber": 50,
+      "Plastic": 9
+    },
+    "elements": {
+      "Hydrogen": 2,
+      "Argon": 0,
+      "Iron": 2,
+      "Titanium": 1,
+      "Uranium": 1,
+      "Silicon": 0
+    },
+    "misc": {},
+    "utils": {
+      "Fruit": 0,
+      "Harvester": 1,
+      "Canister": 0
+    }
+  }
+}

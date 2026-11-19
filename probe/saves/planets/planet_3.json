@@ -1,0 +1,23 @@
+{
+  "id": 3,
+  "name": "Pyroro Rober",
+  "class": "Lush",
+  "climate": "Burning",
+  "temperature": 73,
+  "elements": {
+    "Iron": 28.67595,
+    "Argon": 4.0627146,
+    "Titanium": 11.940601,
+    "Uranium": 2.8957872,
+    "Silicon": 19.508036,
+    "Hydrogen": 14.78742,
+    "Helium": 12.697426,
+    "Nitrogen": 5.432064
+  },
+  "materials": [
+    "Wood",
+    "Dust",
+    "Plastic"
+  ],
+  "inhabitated": false
+}

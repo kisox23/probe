@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::planet_generator::{Element, Item, Material, SpaceFinding, Util};
+use crate::item::{Element, Item, Material, SpaceFinding, Util};
 
 use std::collections::HashMap;
 use std::fmt::Display;
@@ -23,10 +23,6 @@ impl Inventory {
         }
     }
 
-    fn _recipe(materials: &Vec<Material>, elements: &Vec<Element>) {}
-
-    fn drop_item(misc_item: String) {}
-
     pub fn print_all_items(&self) {
         let all_items = self
             .utils
@@ -37,9 +33,9 @@ impl Inventory {
             .chain(self.elements.iter().map(|(k, v)| (k as &dyn Display, v)));
 
         let mut c = 0;
-        for (i, elem) in all_items.enumerate() {
+        for (_i, elem) in all_items.enumerate() {
             if c % 4 == 0 && c > 0 {
-                print!("\n");
+                println!("");
             }
             if *elem.1 == 0 {
                 continue;
@@ -52,10 +48,10 @@ impl Inventory {
 
     pub fn get_qty(&self, item: &Item) -> i32 {
         match item {
-            Item::Ele(e) => *self.elements.get(e).unwrap(),
-            Item::Mat(m) => *self.materials.get(m).unwrap(),
-            Item::Uti(u) => *self.utils.get(u).unwrap(),
-            Item::Misc(misc) => *self.misc.get(misc).unwrap(),
+            Item::Ele(e) => *self.elements.get(e).unwrap_or(&0),
+            Item::Mat(m) => *self.materials.get(m).unwrap_or(&0),
+            Item::Uti(u) => *self.utils.get(u).unwrap_or(&0),
+            Item::Misc(misc) => *self.misc.get(misc).unwrap_or(&0),
         }
     }
 }

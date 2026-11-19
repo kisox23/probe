@@ -1,0 +1,22 @@
+{
+  "id": 2,
+  "name": "Zenocal-III",
+  "class": "Familiar",
+  "climate": "Corrosive",
+  "temperature": 73,
+  "elements": {
+    "Nitrogen": 5.883274,
+    "Argon": 6.1012254,
+    "Uranium": 3.7274475,
+    "Iron": 21.810104,
+    "Silicon": 25.335037,
+    "Hydrogen": 13.996708,
+    "Helium": 13.571474,
+    "Titanium": 9.574724
+  },
+  "materials": [
+    "Fiber",
+    "Stone"
+  ],
+  "inhabitated": false
+}

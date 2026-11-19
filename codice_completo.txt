@@ -1,0 +1,1743 @@
+==> Cargo.toml <==
+[package]
+name = "probe"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+colored = "3.1.1"
+crossterm = "0.29.0"
+rand = "0.10.3"
+regex = "1.13.2"
+serde = {version = "1.0.229", features = ["derive"]}
+serde_json = "1.0.154"
+strum = "0.28.0"
+strum_macros = "0.28.0"
+
+==> src/ascii_art.rs <==
+use crossterm::{
+    cursor::MoveTo,
+    execute,
+    terminal::{Clear, ClearType},
+};
+use regex::Regex;
+use std::io::stdout;
+
+pub const DISCOVERY: &str = r#".------------------------------------------------------------.
+!                                              _.oo.         !     
+!                       _.u[[/;:,.         .odMMMMMM'        !
+!                    .o888UU[[[/;:-.   .o@P^   MMM^          !
+!                   oN88888UU[[[/;::-.        dP^            !
+!                 dNMMMNN888UU[[[/;::-.   .o@P^              !
+!                dMMMMMMMN888UU[[[/;::-.o@^                  !
+!               NNNMMMMN888UU[[[/~.o@P^                      !
+!               ?888888888UU[[[/o@^-;:.                      !
+!                oI8888UU[[[/o@P^:--..                       !
+!             .@^  YUU[[[/o@^;::---..                        !
+!           oMP     ^/o@P^;:::---..                          !
+!        .dMMM    .o@^ ^;::---...                            !
+!       dMMMMMMMM@^        ^^^^                              !
+!      YMMMUP^                                               !
+\____________________________________________________________/
+"#;
+
+pub const ORBIT: &str = r#".------------------------------------------------------------.
+|  .        *            .      +         ,d*$$$$$$$ko.      |
+|     *              .                  j'.SSS$$$$$$$$$L.    |
+|                    +                 d..:::SS$$S$$$$$$$k   |
+| .          *                  .    .d..:::::::SSS$$$$$$$$. |
+|         .         .    +           $..::::::::::sSS$$$$$$$ |
+|   *                  .             $...~~~::::::::SS$$$$$$ |
+|                .              .     $...~~:::::::::SSS$$$7 |
+| .       *           +       .        $`.:::::::::::SS$$$'  |
+| +     .          *            .       "c.::::::::ssS$$7    |
+/============================================================\
+|  [PHASE]  .----------------------------------.  [STAT OK]  |
+|  • o o •  |  VEL: 0.82c    ALT: 340 km       |  [|||||||]  |
+|  [==>==]  |  > LANDING SEQUENCE AUTHORISED   |  [•I•I•I•]  |
+|           '----------------------------------'             |
+\____________________________________________________________/
+"#;
+
+pub const SHIP: &str = r#".------------------------------------------------------------.
+|		 \	.		.   /	             |
+|   *             \             *          /   		*    |
+|            +     \   .--------------.   /     +            |
+|     +             \  |  SHIP  FUEL  |  /           .       |
+|                    \ | [==========] | /                    |
+|       .--------.   .\|  ∆   ∆    ∆  |---------.            |
+|   .   | >PROBE |,:ª$$|     ~~~~     | TYPE P  |º«,      +  |
+|      ,| ONLINE |#°$$$|  TRAVEL  TO  | PLANETS |:$ *;.      |
+|   .4"$|________|$$$  |      ??      |_________|::SS$$“k.   |
+|.:'...::::SSS$$$$$    |______________|..:::SS$$$$    SS$$º:.|
+|..::SS$$  .-----.    / #  SHIP  CTRL  \   .-----.       S$$$|
+|         /  •  /    /   o=o=O • O=o=o  \   \  •  \          |
+|        /  •  /    /  …-° ^v^v^v^v^ °-… \   \  •  \         |
+|       /  •  /    /                      \   \  •  \        |
+\____________________________________________________________/
+"#;
+
+pub const PLANET: &str = r#".------------------------------------------------------------.
+|                                .:$$$$$$$$;,		     |
+|             ,*.              .(    !  @  ˜$).		     |
+|           ,:.::l,           (.  o       •S$$,)             |
+|          /..:::S$L            C,  ˜¶.:SS$$$3               |
+|        ,%..:::SSS$l             \\"|:$|"//		     |
+|      .:7..:::SSS$$$L             \\|:$|//		     |
+|     d\˜˜\:::SSS$$$$$k.            \|:$|/		     |
+|    j.:\˜˜\:SSS$$$$$$$$l.           |:$|		     |
+|  .4.::S\~~\SS$$$$$$$$$$$L          |:$|            j:,     |
+|.:::::SSS\~~\$$$$$$$$$$$$$k........@|:$|ù....uUu...d%$$l;...|
+|::::::::::\~~\;:::::::::::::::::::::::::::::::::::::::::::::|
+|:::::::::._\~~~\.____,:::::::::::::::::::::::::%%:::::::::::|
+|::::::::/~~~~~~~~.∂~~~\,::::::::::::::::::::::%%%%::::::::::|
+|:::::::/~~~<-o>~~~~~~~~|::::::::::::::::::::::::::::::::::::|
+\____________________________________________________________/
+"#;
+
+pub const PLANET_INHABITATED: &str = r#".------------------------------------------------------------.
+|                +~~~                                        |
+|                |                                   .*.     |
+|        ,_______|__________,                  /*\  /   \    |
+|       /.::::SSSSSSS$$$$$$$$\                /   \/     \   |
+|      /..:::::SSSSSSSS$$$$$$$\::::::::::::::::::::::::::::::|
+|     /"|..:::::::SSSSSSS$$$$|"\      .________.     .:::::::|
+|       |..:::::::::SSSSS$$$$|       /..:SSSS$$$\   .::::::::|
+|       |..::::."    ":SSS$$$|     ./'|..S..S$$|'\ .:::::::::|
+|       |..:::7        lSS$$$|        |.:S||S$$|  .::::::::::|
+|       |..:::|        |SS$$$|        |__S||S$$| .:::::::::::|
+|       |..:::|        |SS$$$|::::::::::::||:::::::::::::::::|
+|       |..:::|________|SS$$$|::::::::::://::::::::::::::::::|
+|oooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo|
+|::::::::::::::::::::oooo:oo:::o:::::::::::ooo:::::::::::::::|
+\____________________________________________________________/
+"#;
+
+pub const INHABITANT_STANDING: &str = r#".------------------------------------------------------------.
+|                      .:""""""""""":.                       |
+|                     (   /__\ /__\   )                      |
+|                     \,  \_o/_\o_/  ,/                      |
+|                       \    (_)    /                        |
+|                        `-.'==='.-'                         |
+|                         __) - (__                          |
+|                        /  `~~~`  \                         |
+|                       /  /  $  \  \                        |
+|                       \ :   $   ; /                        |
+|                        \|==(*)==|/                         |
+|                         :   $   :                          |
+|                          \  |  /                           |
+|                        ___)=|=(___                         |
+|                       {____/ \____}                        |
+\____________________________________________________________/
+"#;
+
+pub const INHABITANT_TELLING: &str = r#".------------------------------------------------------------.
+|                      .:""""""""""":.                       |
+|                  !! (   /.O\ /O.\   )                      |
+|                  ^^.\,  \__/_\__/  ,/                      |
+|                  \  \ \    (_)    /                        |
+|                   \  \ `-.'\O/'.-'                         |
+|                    \  \ ._) - (__                          |
+|                     \  "  `~~~`  \                         |
+|                      \./;/  $  \  \                        |
+|                         :   $   ; /                        |
+|                         |==(*)==|/                         |
+|                         :   $   :                          |
+|                          \  |  /                           |
+|                        ___)=|=(___                         |
+|                       {____/ \____}                        |
+\____________________________________________________________/
+"#;
+
+pub const HELP_SCREEN: &str = r#".------------------------------------------------------------.
+! Inside the ship:                                           !
+! -> (e)xplore    -> (s)tatus    -> (i)nventory    -> (q)uit !
+! -> (p)lanets    -> use [item]  -> travel to [id]           !
+! -> (o)rbit      -> combine [item1 item2 ...]               !
+! -> drop [item] [quantity]                                  !
+!                                                            !
+! While in orbit:                                            !
+! -> (l)and       -> (b)ack                                  !
+!                                                            !
+! On a planet:                                               !
+! -> (t)alk       -> (h)arvest    -> (r)etrieve    -> (b)ack !
+!                                                            !
+! While talking:                                             !
+! -> type about greeting, trading, info or farewell          !
+!____________________________________________________________!
+"#;
+
+pub fn clear_and_render(art: &str) {
+    let _ = execute!(stdout(), Clear(ClearType::All), MoveTo(0, 0));
+    print!("{}", art);
+}
+
+pub fn update_ship_view(percentage: i32) -> String {
+    let pct = percentage / 10;
+    let mut updated = String::new();
+    updated.push('[');
+
+    let re_bar = Regex::new(r"\[[^\]]{10}\]").unwrap();
+
+    for _ in 1..=pct {
+        updated.push('=');
+    }
+
+    for _ in 0..(10 - pct) {
+        updated.push(' ');
+    }
+
+    updated.push(']');
+
+    re_bar
+        .replace_all(SHIP, regex::NoExpand(updated.as_str()))
+        .into_owned()
+}
+
+==> src/crafting.rs <==
+use colored::Colorize;
+use serde::{Deserialize, Serialize};
+use std::fs;
+use std::sync::LazyLock;
+
+use crate::item::Item;
+use crate::item::Util::Harvester;
+use crate::models::GameState;
+
+static RECIPES: LazyLock<Vec<Recipe>> = LazyLock::new(|| {
+    let content = fs::read_to_string("meta/recipes.json").expect("UNABLE TO LOCATE RECIPE FILE");
+    let mut recipes: Vec<Recipe> = serde_json::from_str(&content).expect("UNABLE TO DESERIALIZE");
+
+    for r in &mut recipes {
+        r.ingredients.sort();
+    }
+
+    recipes
+});
+
+#[derive(Serialize, Deserialize, PartialEq, Eq)]
+pub struct Recipe {
+    product: Item,
+    ingredients: Vec<Item>,
+    quantity: i32,
+}
+
+pub fn craft(gs: &mut GameState, mut ingredients: Vec<Item>) -> bool {
+    ingredients.sort();
+
+    let Some(found) = RECIPES.iter().find(|r| r.ingredients == ingredients) else {
+        return false;
+    };
+
+    for item in &ingredients {
+        if gs.inventory.get_qty(item) == 0 {
+            println!("You don't have those ingredients.");
+            return false;
+        }
+    }
+
+    if found.product == Item::Uti(Harvester) && gs.inventory.get_qty(&Item::Uti(Harvester)) > 0 {
+        println!("You can only have one Harvester in your inventory.");
+        return false;
+    }
+
+    for item in &found.ingredients {
+        match item {
+            Item::Ele(_) | Item::Mat(_) => gs.inventory.update_item(item, -1),
+            Item::Misc(_) | Item::Uti(_) => {}
+        }
+    }
+
+    gs.inventory.update_item(&found.product, found.quantity);
+
+    println!("You crafted a {}!", found.product.to_string().green());
+
+    return true;
+}
+
+==> src/encounter.rs <==
+use colored::Colorize;
+use rand::seq::IndexedRandom;
+
+use crate::{
+    ascii_art::{
+        INHABITANT_STANDING, INHABITANT_TELLING, PLANET, PLANET_INHABITATED, clear_and_render,
+    },
+    classify, input_command,
+    item::{ELEMENTS, Element, Item, MATERIALS, Material},
+    language::Intent,
+    models::{GameState, Planet},
+    word_generator,
+};
+
+struct Trade {
+    item_received: Item,
+    item_given: Item,
+    qty_received: i32,
+    qty_given: i32,
+}
+
+pub fn talk(gs: &mut GameState, planet: &Planet) {
+    if !planet.inhabitated {
+        println!("Who are you talking to?");
+        return;
+    }
+
+    clear_and_render(INHABITANT_STANDING);
+    let name = word_generator::make_name(rand::random_range(2..4), true);
+    println!("You met the inhabitant {}.", name.yellow());
+    loop {
+        println!("What do you have to say?");
+        let sentence = input_command("? > ");
+        if sentence.len() < 3 {
+            println!("Can't you express yourself?");
+            continue;
+        }
+        let intent = classify(sentence.as_str());
+        match intent {
+            Intent::Trade => {
+                trade(gs);
+                continue;
+            }
+            Intent::Ask => {
+                ask(planet);
+                continue;
+            }
+            Intent::Greet => {
+                println!("Hello there, stranger. What do you need?");
+                continue;
+            }
+            Intent::Bye => {
+                break;
+            }
+        }
+    }
+
+    if planet.inhabitated {
+        clear_and_render(PLANET_INHABITATED);
+    } else {
+        clear_and_render(PLANET);
+    }
+}
+
+fn trade(gs: &mut GameState) {
+    clear_and_render(INHABITANT_TELLING);
+
+    let mut rng = rand::rng();
+    let trade: Trade;
+    let kind = rand::random_bool(0.5);
+
+    if kind {
+        let elements: Vec<&Element> = ELEMENTS.sample(&mut rng, 2).collect();
+        trade = Trade {
+            item_received: Item::Ele(elements[0].clone()),
+            item_given: Item::Ele(elements[1].clone()),
+            qty_received: rand::random_range(1..3),
+            qty_given: rand::random_range(1..3),
+        };
+    } else {
+        let materials: Vec<&Material> = MATERIALS.sample(&mut rng, 2).collect();
+        trade = Trade {
+            item_received: Item::Mat(materials[0].clone()),
+            item_given: Item::Mat(materials[1].clone()),
+            qty_received: rand::random_range(1..3),
+            qty_given: rand::random_range(1..3),
+        };
+    }
+
+    println!(
+        "They ask you if you want to trade {} x{} for {} x{}",
+        trade.item_given, trade.qty_given, trade.item_received, trade.qty_received
+    );
+
+    loop {
+        println!("Do you accept it?");
+        let act = input_command("? > ");
+
+        match act.trim() {
+            "y" | "yes" => {
+                if gs.inventory.get_qty(&trade.item_given) < trade.qty_given {
+                    println!("{}", "You don't have the goods requested.".red());
+                    break;
+                }
+                gs.inventory
+                    .update_item(&trade.item_given, -trade.qty_given);
+                gs.inventory
+                    .update_item(&trade.item_received, trade.qty_given);
+                println!("{}", "You got a deal!".blue());
+                break;
+            }
+            "n" | "no" => {
+                return;
+            }
+            &_ => {
+                println!("It's a yes or no question.");
+            }
+        }
+    }
+}
+
+fn ask(planet: &Planet) {
+    let mut result: Vec<String> = Vec::new();
+    for (_i, elem) in planet.elements.iter().enumerate() {
+        if *elem.1 >= 15.0 {
+            result.push(elem.0.to_string());
+        }
+    }
+
+    print!("I'm pretty sure you can find ");
+    let cnt = result.len();
+    for (i, x) in result.iter().enumerate() {
+        if i == cnt - 1 {
+            print!("{} ", x);
+            continue;
+        }
+        print!("{}, ", x);
+    }
+    if result.is_empty() {
+        print!("nothing ");
+    }
+    print!("here.\n");
+}
+
+==> src/inventory.rs <==
+use serde::{Deserialize, Serialize};
+
+use crate::item::{Element, Item, Material, SpaceFinding, Util};
+
+use std::collections::HashMap;
+use std::fmt::Display;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Inventory {
+    pub materials: HashMap<Material, i32>,
+    pub elements: HashMap<Element, i32>,
+    pub misc: HashMap<SpaceFinding, i32>,
+    pub utils: HashMap<Util, i32>,
+}
+
+impl Inventory {
+    pub fn update_item(&mut self, item: &Item, qty: i32) {
+        match item {
+            Item::Mat(m) => *self.materials.entry(m.clone()).or_insert(0) += qty,
+            Item::Ele(e) => *self.elements.entry(e.clone()).or_insert(0) += qty,
+            Item::Misc(i) => *self.misc.entry(i.clone()).or_insert(0) += qty,
+            Item::Uti(u) => *self.utils.entry(u.clone()).or_insert(0) += qty,
+        }
+    }
+
+    pub fn print_all_items(&self) {
+        let all_items = self
+            .utils
+            .iter()
+            .map(|(k, v)| (k as &dyn Display, v))
+            .chain(self.misc.iter().map(|(k, v)| (k as &dyn Display, v)))
+            .chain(self.materials.iter().map(|(k, v)| (k as &dyn Display, v)))
+            .chain(self.elements.iter().map(|(k, v)| (k as &dyn Display, v)));
+
+        let mut c = 0;
+        for (_i, elem) in all_items.enumerate() {
+            if c % 4 == 0 && c > 0 {
+                println!("");
+            }
+            if *elem.1 == 0 {
+                continue;
+            }
+            c += 1;
+            print!("<{} x{}>    ", elem.0, elem.1);
+        }
+        print!("\n");
+    }
+
+    pub fn get_qty(&self, item: &Item) -> i32 {
+        match item {
+            Item::Ele(e) => *self.elements.get(e).unwrap_or(&0),
+            Item::Mat(m) => *self.materials.get(m).unwrap_or(&0),
+            Item::Uti(u) => *self.utils.get(u).unwrap_or(&0),
+            Item::Misc(misc) => *self.misc.get(misc).unwrap_or(&0),
+        }
+    }
+}
+
+==> src/item.rs <==
+use serde::{Deserialize, Serialize};
+use std::{fmt, str::FromStr};
+use strum_macros::EnumIter;
+
+use crate::item::{Element::*, Material::*};
+
+pub const ELEMENTS: &[Element] = &[
+    Iron, Titanium, Silicon, Uranium, Hydrogen, Helium, Nitrogen, Argon,
+];
+
+pub const MATERIALS: &[Material] = &[Wood, Fiber, Oil, Stone, Dust, Plastic];
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, PartialOrd, Ord, Clone)]
+pub enum Item {
+    Mat(Material),
+    Ele(Element),
+    Misc(SpaceFinding),
+    Uti(Util),
+}
+
+impl fmt::Display for Item {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Item::Mat(m) => write!(f, "{:?}", m),
+            Item::Ele(e) => write!(f, "{:?}", e),
+            Item::Misc(misc) => write!(f, "{:?}", misc),
+            Item::Uti(u) => write!(f, "{:?}", u),
+        }
+    }
+}
+
+impl FromStr for Item {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_lowercase().as_str() {
+            "iron" => Ok(Item::Ele(Element::Iron)),
+            "titanium" => Ok(Item::Ele(Element::Titanium)),
+            "silicon" => Ok(Item::Ele(Element::Silicon)),
+            "uranium" => Ok(Item::Ele(Element::Uranium)),
+
+            "hydrogen" => Ok(Item::Ele(Element::Hydrogen)),
+            "argon" => Ok(Item::Ele(Element::Argon)),
+            "helium" => Ok(Item::Ele(Element::Helium)),
+            "nitrogen" => Ok(Item::Ele(Element::Nitrogen)),
+
+            "wood" => Ok(Item::Mat(Material::Wood)),
+            "fiber" => Ok(Item::Mat(Material::Fiber)),
+            "oil" => Ok(Item::Mat(Material::Oil)),
+            "stone" => Ok(Item::Mat(Material::Stone)),
+            "dust" => Ok(Item::Mat(Material::Dust)),
+            "plastic" => Ok(Item::Mat(Material::Plastic)),
+
+            "canister" => Ok(Item::Uti(Util::Canister)),
+            "fruit" => Ok(Item::Uti(Util::Fruit)),
+            "harvester" => Ok(Item::Uti(Util::Harvester)),
+
+            _ => Err(format!("Unknown object: '{}'", s)),
+        }
+    }
+}
+
+#[derive(Debug, EnumIter, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
+pub enum Material {
+    Wood,
+    Fiber,
+    Oil,
+    Stone,
+    Dust,
+    Plastic,
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
+pub enum Util {
+    Canister,
+    Fruit,
+    Harvester,
+}
+
+impl fmt::Display for Util {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl fmt::Display for Material {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl fmt::Display for Element {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+impl fmt::Display for SpaceFinding {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, PartialEq, Eq, Hash, Clone, PartialOrd, Ord)]
+pub enum Element {
+    Iron,
+    Titanium,
+    Silicon,
+    Uranium,
+
+    Hydrogen,
+    Helium,
+    Nitrogen,
+    Argon,
+}
+
+#[derive(Debug, Serialize, Deserialize, Hash, Eq, PartialEq, Clone, PartialOrd, Ord)]
+pub enum SpaceFinding {
+    Capsule,
+    Wire,
+    Envelope,
+}
+
+==> src/language.rs <==
+use std::collections::{HashMap, HashSet};
+
+const TRAINING_DATA: &[(Intent, &str)] = &[
+    // --- GREET: Saluti, apertura pacifica, presentazioni ---
+    (Intent::Greet, "hello traveler"),
+    (Intent::Greet, "hi stranger"),
+    (Intent::Greet, "greetings"),
+    (Intent::Greet, "hello there"),
+    (Intent::Greet, "hey friend"),
+    (Intent::Greet, "good to see you"),
+    (Intent::Greet, "nice to meet you"),
+    (Intent::Greet, "i come in peace"),
+    (Intent::Greet, "how are you doing"),
+    (Intent::Greet, "what is up"),
+    (Intent::Greet, "hail alien"),
+    (Intent::Greet, "welcome"),
+    // --- TRADE: Verbi e nomi legati a scambio, risorse, rifornimenti ---
+    (Intent::Trade, "i want to trade"),
+    (Intent::Trade, "let us barter"),
+    (Intent::Trade, "can we make a deal"),
+    (Intent::Trade, "i want to buy supplies"),
+    (Intent::Trade, "i have resources to sell"),
+    (Intent::Trade, "show me your wares"),
+    (Intent::Trade, "what are your goods"),
+    (Intent::Trade, "i need fuel and materials"),
+    (Intent::Trade, "looking for raw elements"),
+    (Intent::Trade, "do you sell equipment"),
+    (Intent::Trade, "i offer an exchange"),
+    (Intent::Trade, "open your inventory"),
+    // --- ASK: Domande sul pianeta, pericoli, lore e indicazioni ---
+    (Intent::Ask, "tell me about this planet"),
+    (Intent::Ask, "is this place safe"),
+    (Intent::Ask, "what dangers are here"),
+    (Intent::Ask, "where can i find resources"),
+    (Intent::Ask, "describe the climate"),
+    (Intent::Ask, "who are you"),
+    (Intent::Ask, "what is this world like"),
+    (Intent::Ask, "any advice for exploring"),
+    (Intent::Ask, "explain this sector to me"),
+    (Intent::Ask, "what species live here"),
+    (Intent::Ask, "i need information"),
+    (Intent::Ask, "where should i go next"),
+    // --- BYE: arrivederci a tutti
+    (Intent::Bye, "bye bye"),
+    (Intent::Bye, "goodbye"),
+    (Intent::Bye, "i have to go"),
+    (Intent::Bye, "see you"),
+    (Intent::Bye, "bye now"),
+    (Intent::Bye, "i must leave"),
+    (Intent::Bye, "i am leaving"),
+    (Intent::Bye, "farewell"),
+];
+
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+pub enum Intent {
+    Greet,
+    Trade,
+    Ask,
+    Bye,
+}
+
+pub struct Classifier {
+    frequencies: HashMap<(Intent, String), usize>,
+    words_per_intent: HashMap<Intent, usize>,
+    sentences_per_intent: HashMap<Intent, usize>,
+    word_set: HashSet<String>,
+}
+
+impl Classifier {
+    pub fn predict(&self, sentence: &str) -> Intent {
+        let tokens = tokenize(sentence);
+
+        let total_sentences = TRAINING_DATA.len() as f64;
+        let vocab_size = self.word_set.len() as f64;
+
+        let mut best_score = f64::NEG_INFINITY;
+        let mut best_intent = Intent::Greet;
+
+        for (&intent, &n_sentences) in &self.sentences_per_intent {
+            // calculate prior
+            let mut score = (n_sentences as f64 / total_sentences).ln();
+
+            let intent_word_total = *self.words_per_intent.get(&intent).unwrap_or(&0) as f64;
+
+            // calculate the likelihood
+            for token in &tokens {
+                let count = *self.frequencies.get(&(intent, token.clone())).unwrap_or(&0) as f64;
+                let prob = (count + 1.0) / (intent_word_total + vocab_size);
+                score += prob.ln();
+            }
+
+            if score > best_score {
+                best_score = score;
+                best_intent = intent;
+            }
+        }
+
+        best_intent
+    }
+}
+
+pub fn tokenize(text: &str) -> Vec<String> {
+    let lower = text.to_lowercase();
+
+    let mut tokens: Vec<String> = Vec::new();
+    for element in lower.split_whitespace() {
+        let token: String = element.chars().filter(|c| c.is_alphabetic()).collect();
+        if !token.is_empty() {
+            tokens.push(token);
+        }
+    }
+
+    tokens
+}
+
+pub fn train() -> Classifier {
+    let mut frequencies: HashMap<(Intent, String), usize> = HashMap::new();
+    let mut words_per_intent: HashMap<Intent, usize> = HashMap::new();
+    let mut sentences_per_intent: HashMap<Intent, usize> = HashMap::new();
+    let mut word_set: HashSet<String> = HashSet::new();
+
+    // count how many occurences per Intent
+    for &(intent, sentence) in TRAINING_DATA {
+        *sentences_per_intent.entry(intent).or_insert(0) += 1;
+        for token in tokenize(sentence) {
+            *words_per_intent.entry(intent).or_insert(0) += 1;
+            *frequencies.entry((intent, token.clone())).or_insert(0) += 1;
+            word_set.insert(token);
+        }
+    }
+
+    Classifier {
+        frequencies,
+        words_per_intent,
+        sentences_per_intent,
+        word_set,
+    }
+}
+
+==> src/main.rs <==
+mod ascii_art;
+mod crafting;
+mod encounter;
+mod inventory;
+mod item;
+mod language;
+mod models;
+mod planet_generator;
+mod planet_visit;
+mod storage;
+mod word_generator;
+
+use std::{
+    io::{self, Write},
+    process::exit,
+    str::FromStr,
+    sync::LazyLock,
+};
+
+use colored::Colorize;
+
+use crate::{
+    ascii_art::*,
+    crafting::craft,
+    item::*,
+    language::{Classifier, Intent, train},
+    models::GameState,
+    planet_generator::generate,
+    planet_visit::visit_planet,
+    storage::{add_planet, erase_all, get_current_planet, list_planets, load, save},
+    word_generator::NameGenerator,
+};
+
+static CLASSIFIER: LazyLock<Classifier> = LazyLock::new(train);
+
+pub fn classify(sentence: &str) -> Intent {
+    CLASSIFIER.predict(sentence)
+}
+
+fn main() {
+    let mut gs: GameState = load();
+    let name_gen = NameGenerator::new();
+
+    let current_ship_view = update_ship_view(gs.fuel);
+
+    println!("Welcome to PROBE.");
+    println!("Enter 'help' for a list of commands.");
+
+    clear_and_render(&current_ship_view);
+
+    loop {
+        let cmd = input_command("Ship > ");
+
+        match cmd.as_str() {
+            "e" | "explore" => explore(&mut gs, &name_gen),
+            "i" | "inventory" => inventory(&mut gs),
+            "p" | "planets" => show_planets(&gs),
+            "o" | "orbit" => {
+                let planet = get_current_planet(&gs);
+                actions(&mut gs, false, planet.name.as_str());
+            }
+            "s" | "status" => status(&gs),
+            "h" | "help" => {
+                help();
+                clear_and_render(&(update_ship_view(gs.fuel)));
+                continue;
+            }
+            "q" | "quit" => quit(&gs),
+            "erase-all-data" => erase_data(),
+            "" => {}
+            _ => {
+                if let Some(id_str) = cmd.strip_prefix("travel to ") {
+                    match id_str.trim().parse::<u64>() {
+                        Ok(planet_id) => {
+                            if planet_id <= gs.current_id {
+                                if gs.fuel < 20 && gs.current_planet != planet_id {
+                                    println!("No fuel to travel to another planet.");
+                                    continue;
+                                }
+                                if gs.fuel >= 20 && gs.current_planet != planet_id {
+                                    gs.fuel -= 20;
+                                }
+                                gs.current_planet = planet_id;
+                                gs.current_name = get_current_planet(&gs).name;
+                                save(&gs).expect("UNABLE TO SAVE");
+                                actions(&mut gs, false, "");
+                                clear_and_render(&(update_ship_view(gs.fuel)));
+                                continue;
+                            } else {
+                                println!("{}", "Planet index out of range.".red());
+                                continue;
+                            }
+                        }
+                        Err(_) => {
+                            println!("Not a valid planet ID.");
+                        }
+                    }
+                } else if let Some(drop_string) = cmd.strip_prefix("drop ") {
+                    let mut words = drop_string.split_whitespace();
+                    let Some(item_str) = words.next() else {
+                        println!("Syntax is: drop [item] [qty]");
+                        continue;
+                    };
+
+                    let Ok(item) = Item::from_str(item_str) else {
+                        println!("Not an item");
+                        continue;
+                    };
+
+                    let qty = match words.next() {
+                        Some(qty_str) => match qty_str.parse::<i32>() {
+                            Ok(n) if n > 0 => n,
+                            _ => {
+                                println!("Invalid quantity.");
+                                continue;
+                            }
+                        },
+                        None => 1,
+                    };
+
+                    if gs.inventory.get_qty(&item) < qty {
+                        println!("You want to lose more than you have?");
+                        continue;
+                    }
+
+                    gs.inventory.update_item(&item, -qty);
+                    println!("Dropped.");
+                    continue;
+                } else if let Some(item_string) = cmd.strip_prefix("use ") {
+                    let item = Item::from_str(item_string);
+                    match item {
+                        Ok(Item::Uti(u)) => {
+                            gs.consume(u);
+                            continue;
+                        }
+                        Ok(Item::Mat(_)) | Ok(Item::Ele(_)) => {
+                            println!("Can't use elements or materials.");
+                            continue;
+                        }
+                        Ok(Item::Misc(m)) => {}
+                        Err(_) => {
+                            println!("Not an item.");
+                            continue;
+                        }
+                    }
+
+                    clear_and_render(&update_ship_view(gs.fuel));
+                    continue;
+                } else if let Some(craft_string) = cmd.strip_prefix("combine ") {
+                    let words = craft_string.split_whitespace();
+                    let mut ingredients: Vec<Item> = Vec::new();
+
+                    for word in words {
+                        let item = Item::from_str(word);
+                        match item {
+                            Ok(Item::Ele(_)) | Ok(Item::Mat(_)) => {
+                                ingredients.push(item.unwrap());
+                            }
+                            Ok(Item::Uti(_)) | Ok(Item::Misc(_)) => {
+                                println!("Can't combine anything but elements or materials.");
+                                break;
+                            }
+                            Err(_) => {
+                                println!("Not items.");
+                                break;
+                            }
+                        }
+                    }
+
+                    if craft(&mut gs, ingredients) {
+                        continue;
+                    }
+                    continue;
+                }
+                println!("Not a command.");
+            }
+        }
+    }
+}
+
+fn input_command(prompt: &str) -> String {
+    print!("{}", prompt);
+    io::stdout().flush().expect("STDOUT error");
+
+    let mut input = String::new();
+    io::stdin().read_line(&mut input).expect("STDIN error");
+
+    input.trim().to_lowercase()
+}
+
+fn explore(gs: &mut GameState, name_gen: &NameGenerator) {
+    if gs.fuel <= 0 {
+        println!("Insufficient fuel! Please refuel the tank.");
+        return;
+    }
+
+    gs.current_id += 1;
+    gs.fuel -= 20;
+
+    let next_id = &gs.current_id;
+    let planet = generate(*next_id, name_gen);
+    add_planet(&planet).expect("SOMETHING WENT WRONG");
+
+    gs.current_planet = gs.current_id;
+    gs.current_name = get_current_planet(gs).name;
+
+    actions(gs, true, planet.name.as_str());
+
+    let render = update_ship_view(gs.fuel);
+    clear_and_render(&render);
+}
+
+fn actions(gs: &mut GameState, expl: bool, planet_name: &str) {
+    let mut visited = expl;
+    loop {
+        if expl && visited {
+            clear_and_render(DISCOVERY);
+            visited = false;
+            println!("Discovered a new planet, {}!", planet_name.blue());
+        } else {
+            clear_and_render(ORBIT);
+            println!("Currently orbiting {}", planet_name.blue());
+        }
+        println!("What are you going to do?");
+        let action = input_command("Orbit >> ");
+
+        match action.as_str() {
+            "l" | "land" => visit_planet(gs),
+            "b" | "back" => {
+                clear_and_render(&update_ship_view(gs.fuel));
+                return;
+            }
+            _ => {
+                println!("Not a command!");
+                continue;
+            }
+        }
+    }
+}
+
+fn status(gs: &GameState) {
+    println!("============ STATUS ============");
+    println!("Ship fuel: {}%", gs.fuel);
+    println!("Vigor: {}%", gs.vigor);
+}
+
+fn show_planets(gs: &GameState) {
+    println!("======== DISCOVERY LIST ========");
+    let planets = list_planets(gs);
+
+    for elem in planets.iter() {
+        let mut current = "";
+        if elem.id == gs.current_planet {
+            current = "(current)";
+        }
+        println!(
+            "    Planet {} {} {}",
+            elem.id.to_string().bold(),
+            elem.name.bold().purple(),
+            current
+        );
+        println!("-> Class: {}", elem.class.green());
+        println!(
+            "-> Climate: {}, {}°",
+            elem.climate.yellow(),
+            elem.temperature
+        );
+        println!(
+            "-> Inhabitated: {}",
+            if elem.inhabitated {
+                "yes".bold()
+            } else {
+                "no".bold()
+            }
+        );
+        println!("--------------------------------")
+    }
+}
+
+fn inventory(gs: &mut GameState) {
+    println!("========== INVENTORY ===========");
+    gs.inventory.print_all_items();
+}
+
+fn quit(gs: &GameState) {
+    save(gs).expect("SOMETHING WENT WRONG");
+    println!("GOOD-BYE");
+    exit(0);
+}
+
+fn help() {
+    clear_and_render(HELP_SCREEN);
+    let _ = input_command("Press enter to go back.");
+}
+
+fn erase_data() {
+    erase_all();
+    exit(0);
+}
+
+==> src/models.rs <==
+use std::collections::HashMap;
+
+use serde::{Deserialize, Serialize};
+
+use crate::{
+    inventory::Inventory,
+    item::{Element, Material, Util},
+};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Planet {
+    pub id: u64,
+    pub name: String,
+    pub class: String,
+    pub climate: String,
+    pub temperature: i32,
+    pub elements: HashMap<Element, f32>,
+    pub materials: Vec<Material>,
+    pub inhabitated: bool,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct GameState {
+    pub current_id: u64,
+    pub current_planet: u64,
+    pub current_name: String,
+    pub fuel: i32,
+    pub vigor: i32,
+    pub inventory: Inventory,
+}
+
+impl GameState {
+    pub fn consume(&mut self, item: Util) {
+        let available = self.inventory.utils.get(&item).copied().unwrap_or(0) > 0;
+        if !available {
+            println!("No {} found in storage.", item.to_string());
+            return;
+        }
+
+        match item {
+            Util::Canister => {
+                if self.fuel == 100 {
+                    println!("Tank is already full.");
+                    return;
+                }
+                *self.inventory.utils.get_mut(&item).unwrap() -= 1;
+                self.fuel = 100;
+            }
+            Util::Fruit => {
+                if self.vigor == 100 {
+                    println!("You're strong and vigorous!");
+                    return;
+                }
+                *self.inventory.utils.get_mut(&item).unwrap() -= 1;
+                self.vigor += 20;
+            }
+            Util::Harvester => {
+                println!("Can't use this now");
+                return;
+            }
+        }
+    }
+}
+
+==> src/planet_generator.rs <==
+use rand::prelude::*;
+use std::collections::HashMap;
+use strum::IntoEnumIterator;
+
+use crate::item::{Element, Material};
+use crate::models::Planet;
+use crate::word_generator::NameGenerator;
+
+const HOT_CLIMATE: &[&str] = &[
+    "Acid",
+    "Burning",
+    "Corrosive",
+    "Extreme",
+    "Insular",
+    "Quaggy",
+    "Subtropical",
+];
+
+const COLD_CLIMATE: &[&str] = &["Frigid", "Glacial", "Nordic", "Polar", "Unsettled", "Windy"];
+
+const MILD_CLIMATE: &[&str] = &[
+    "Dainty",
+    "Humid",
+    "Jungly",
+    "Littoral",
+    "Mild",
+    "Oceanic",
+    "Temperate",
+    "Vernal",
+    "Rainy",
+];
+
+const CLASSES: &[&str] = &[
+    "Gas Giant",
+    "Lush",
+    "Rocky",
+    "Satellite",
+    "Lifeless",
+    "Resonant",
+    "Familiar",
+    "Radioactive",
+    "Abandoned",
+    "Moon",
+];
+
+pub fn generate(next_id: u64, name_gen: &NameGenerator) -> Planet {
+    let mut rng = rand::rng();
+    // deprecated -> let name = word_generator::make_name(rand::random_range(2..8), false);
+    let name = name_gen.make_name(rand::random_range(1..=6));
+    let class = CLASSES.choose(&mut rng).unwrap();
+    let inhabitated = if *class == "Lifeless" {
+        false
+    } else {
+        rand::random_bool(0.1)
+    };
+
+    let materials = generate_materials();
+
+    let climate_class = rand::random_range(0..3);
+    match climate_class {
+        0 => {
+            let climate = MILD_CLIMATE.choose(&mut rng).unwrap();
+            let temperature = rand::random_range(10..=35);
+
+            let elements = generate_resources(temperature);
+
+            Planet {
+                id: next_id,
+                name,
+                class: class.to_string(),
+                climate: climate.to_string(),
+                temperature,
+                elements,
+                materials,
+                inhabitated,
+            }
+        }
+        1 => {
+            let climate = HOT_CLIMATE.choose(&mut rng).unwrap();
+            let temperature = rand::random_range(36..=100);
+
+            let elements = generate_resources(temperature);
+
+            Planet {
+                id: next_id,
+                name,
+                class: class.to_string(),
+                climate: climate.to_string(),
+                temperature,
+                elements,
+                materials,
+                inhabitated,
+            }
+        }
+        2 => {
+            let climate = COLD_CLIMATE.choose(&mut rng).unwrap();
+            let temperature = rand::random_range(-100..=9);
+
+            let elements = generate_resources(temperature);
+
+            Planet {
+                id: next_id,
+                name,
+                class: class.to_string(),
+                climate: climate.to_string(),
+                temperature,
+                elements,
+                materials,
+                inhabitated,
+            }
+        }
+        _ => Planet {
+            id: next_id,
+            name: String::from("Unknown"),
+            class: String::from("Lifeless"),
+            climate: String::from("Temperate"),
+            temperature: 0,
+            elements: HashMap::new(),
+            materials,
+            inhabitated,
+        },
+    }
+}
+
+fn generate_resources(temperature: i32) -> HashMap<Element, f32> {
+    // function that associates a percentage of spawning to a material based on temperature
+    let mut raw_weights: HashMap<Element, f32> = HashMap::new();
+
+    let heat_factor = ((temperature + 200) as f32 / 400.0).clamp(0.0, 1.0);
+    let cold_factor = 1.0 - heat_factor;
+
+    // hot materials
+    raw_weights.insert(
+        Element::Iron,
+        (10.0 + heat_factor * 60.0) * rand::random_range(0.7..1.3),
+    );
+    raw_weights.insert(
+        Element::Silicon,
+        (15.0 + heat_factor * 50.0) * rand::random_range(0.7..1.3),
+    );
+    raw_weights.insert(
+        Element::Titanium,
+        (5.0 + heat_factor * 25.0) * rand::random_range(0.5..1.5),
+    );
+    raw_weights.insert(
+        Element::Uranium,
+        (2.0 + heat_factor * 15.0) * rand::random_range(0.2..1.8),
+    );
+
+    // cold materials
+    raw_weights.insert(
+        Element::Hydrogen,
+        (5.0 + cold_factor * 70.0) * rand::random_range(0.7..1.3),
+    );
+    raw_weights.insert(
+        Element::Helium,
+        (5.0 + cold_factor * 50.0) * rand::random_range(0.7..1.3),
+    );
+    raw_weights.insert(
+        Element::Nitrogen,
+        (10.0 + cold_factor * 30.0) * rand::random_range(0.5..1.5),
+    );
+    raw_weights.insert(
+        Element::Argon,
+        (2.0 + cold_factor * 15.0) * rand::random_range(0.2..1.8),
+    );
+
+    let total_weight: f32 = raw_weights.values().sum();
+
+    let mut percentages: HashMap<Element, f32> = HashMap::new();
+    for (elem, weight) in raw_weights {
+        let pct = (weight / total_weight) * 100.0;
+        percentages.insert(elem, pct);
+    }
+
+    percentages
+}
+
+fn generate_materials() -> Vec<Material> {
+    let mut materials: Vec<Material> = Vec::new();
+
+    for elem in Material::iter() {
+        let prob = rand::random_bool(0.4);
+        if prob {
+            materials.push(elem);
+        }
+    }
+
+    materials
+}
+
+==> src/planet_visit.rs <==
+use std::str::FromStr;
+
+use rand::{random_bool, seq::IndexedRandom};
+
+use colored::Colorize;
+
+use crate::{
+    ascii_art::{PLANET, PLANET_INHABITATED, clear_and_render},
+    encounter::talk,
+    input_command,
+    item::{
+        Element, Item,
+        Util::{self, Fruit},
+    },
+    models::{GameState, Planet},
+    storage::get_current_planet,
+};
+
+pub fn visit_planet(gs: &mut GameState) {
+    let planet = get_current_planet(gs);
+
+    if planet.inhabitated {
+        clear_and_render(PLANET_INHABITATED);
+    } else {
+        clear_and_render(PLANET);
+    }
+    println!("=== WELCOME TO {} ===", planet.name);
+
+    loop {
+        println!("What do you feel up to?");
+        let cmd = input_command("Planet >>> ");
+        match cmd.as_str() {
+            "r" | "retrieve" => retrieve_material(gs, &planet),
+            "h" | "harvest" => harvest_element(gs, &planet),
+            "t" | "talk" => talk(gs, &planet),
+            "b" | "back" => return,
+            _ => {
+                println!("Not a command");
+                continue;
+            }
+        }
+    }
+}
+
+fn retrieve_material(gs: &mut GameState, planet: &Planet) {
+    if planet.materials.is_empty() {
+        println!("{}", "This planet has nothing to offer.".bright_yellow());
+        return;
+    }
+
+    if !tire(gs, planet) {
+        println!("{}", "You're too tired for this now.".red());
+        return;
+    }
+
+    let mut rng = rand::rng();
+    if let Some(loot) = planet.materials.choose(&mut rng) {
+        gs.inventory.update_item(&Item::Mat(loot.clone()), 1);
+        let mut add = String::new();
+        if rand::random_bool(0.25) {
+            gs.inventory.update_item(&Item::Uti(Fruit), 1);
+            add = format!(" and {} too.", Util::Fruit.to_string());
+        }
+        println!("Found {}{}", loot.to_string(), add);
+    }
+}
+
+fn harvest_element(gs: &mut GameState, planet: &Planet) {
+    if !tire(gs, planet) {
+        println!("{}", "You're too tired for this now.".red());
+        return;
+    }
+
+    if gs.inventory.get_qty(&Item::Uti(Util::Harvester)) == 0 {
+        println!("You need a Harvester.");
+        return;
+    }
+
+    let mut rng = rand::rng();
+    let entries: Vec<(&Element, &f32)> = planet.elements.iter().collect();
+
+    if let Ok((loot, _)) = entries.choose_weighted(&mut rng, |&(_, pct)| *pct) {
+        gs.inventory.update_item(&Item::Ele((*loot).clone()), 1);
+        println!("You managed to get some {}.", loot.to_string());
+    }
+
+    if random_bool(0.05) {
+        gs.inventory.update_item(&Item::Uti(Util::Harvester), -1);
+        println!("{}", "Your harvester broke!".yellow());
+    }
+}
+
+fn tire(gs: &mut GameState, planet: &Planet) -> bool {
+    if planet.temperature > 40 || planet.temperature < 0 {
+        if gs.vigor >= 20 {
+            gs.vigor -= 20;
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        if gs.vigor >= 10 {
+            gs.vigor -= 10;
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
+==> src/storage.rs <==
+use crate::inventory::Inventory;
+use crate::item::Material::*;
+use crate::models::{GameState, Planet};
+use std::collections::HashMap;
+use std::fs;
+use std::io;
+use std::path::Path;
+
+const SAVE_PATH: &str = "saves/state.json";
+
+pub fn add_planet(planet: &Planet) -> io::Result<()> {
+    fs::create_dir_all("saves/planets")?;
+    let json_string = serde_json::to_string_pretty(planet).expect("COULDN'T SAVE");
+
+    let path = format!("saves/planets/planet_{}.json", planet.id);
+    fs::write(path, json_string)
+}
+
+pub fn load() -> GameState {
+    if !Path::new(SAVE_PATH).exists() {
+        erase_all();
+
+        let inventory = Inventory {
+            elements: HashMap::new(),
+            materials: HashMap::new(),
+            misc: HashMap::new(),
+            utils: HashMap::new(),
+        };
+
+        return GameState {
+            current_id: 0,
+            current_planet: 0,
+            current_name: String::from("Earth"),
+            fuel: 100,
+            vigor: 100,
+            inventory,
+        };
+    }
+
+    let content = fs::read_to_string(SAVE_PATH).expect("UNABLE TO READ SAVE FILE");
+
+    let state: GameState = serde_json::from_str(&content).expect("UNABLE TO DESERIALIZE");
+
+    state
+}
+
+pub fn save(gs: &GameState) -> io::Result<()> {
+    fs::create_dir_all("saves")?;
+
+    let json_string = serde_json::to_string_pretty(&gs).expect("UNABLE TO WRITE SAVE FILE");
+
+    fs::write(SAVE_PATH, json_string)
+}
+
+pub fn erase_all() {
+    let inventory = Inventory {
+        elements: HashMap::new(),
+        materials: HashMap::new(),
+        misc: HashMap::new(),
+        utils: HashMap::new(),
+    };
+
+    let state = GameState {
+        current_id: 0,
+        current_planet: 0,
+        current_name: String::from("Earth"),
+        fuel: 100,
+        vigor: 100,
+        inventory,
+    };
+
+    let json_string = serde_json::to_string_pretty(&state).expect("ERROR");
+    fs::write(SAVE_PATH, json_string).expect("COULDN'T WRITE NEW DATA");
+
+    fs::remove_dir_all("saves/planets").expect("UNABLE TO ERASE DATA");
+    fs::create_dir_all("saves/planets").expect("UNABLE TO RESTORE DATA");
+
+    let earth = Planet {
+        name: String::from("Earth"),
+        id: 0,
+        class: String::from("Lush"),
+        climate: String::from("Unsettled"),
+        temperature: 25,
+        elements: HashMap::new(),
+        materials: vec![Fiber, Oil, Wood, Stone, Dust],
+        inhabitated: true,
+    };
+
+    let json_string = serde_json::to_string_pretty(&earth).expect("ERROR");
+    fs::write("saves/planets/planet_0.json", json_string).expect("UNABLE TO WRITE DATA");
+}
+
+pub fn get_current_planet(gs: &GameState) -> Planet {
+    let id = gs.current_planet;
+    let path = format!("saves/planets/planet_{}.json", id);
+    let json = fs::read_to_string(&path).expect("UNABLE TO READ PLANET");
+    serde_json::from_str(&json).expect("UNABLE TO DESERIALIZE PLANET")
+}
+
+pub fn list_planets(gs: &GameState) -> Vec<Planet> {
+    let mut list: Vec<Planet> = Vec::new();
+    for i in 0..=gs.current_id {
+        let path = format!("saves/planets/planet_{}.json", i);
+        let json_string = fs::read_to_string(&path).expect("UNABLE TO READ JSON");
+        let planet: Planet = serde_json::from_str(&json_string).expect("UNABLE TO LOAD LIST");
+
+        list.push(planet);
+    }
+
+    list
+}
+
+==> src/word_generator.rs <==
+use rand::prelude::*;
+
+const SYLLABLES: &[&str] = &[
+    "ka", "be", "ni", "wol", "sa", "shi", "om", "ap", "gen", "bil", "gor", "ra", "exe", "zo", "ur",
+    "fi", "vel", "sai", "gon", "hen", "hyu", "the", "dir", "gan", "liu", "ai", "ei", "ui", "jo",
+    "ek", "ed", "rok", "man", "to", "ny", "ze", "low", "lim", "ass", "fal", "stat", "oi", "xi",
+    "wan", "wa", "wo", "ess", "eim", "ra", "tak", "gyo", "zai", "ber", "uli", "opa", "al", "tok",
+    "coll", "ral", "vn", "iri",
+];
+
+const NAMES: &[&str] = &[
+    "IP", "LO", "AK", "FEI", "MA", "GO", "NO", "KI", "TEI", "UU", "UL", "ROI", "KE", "A", "DO",
+    "FA", "FEL", "UT", "JA", "CON", "R", "EI",
+];
+
+pub fn make_name(n_syllables: usize, name: bool) -> String {
+    let mut rng = rand::rng();
+    let mut choices: Vec<&str> = Vec::new();
+
+    if name {
+        for _ in 0..n_syllables {
+            if let Some(syllable) = NAMES.choose(&mut rng) {
+                choices.push(syllable);
+            }
+        }
+        return choices.concat();
+    }
+
+    for _ in 0..n_syllables {
+        if let Some(syllable) = SYLLABLES.choose(&mut rng) {
+            choices.push(syllable);
+        }
+    }
+
+    if n_syllables >= 5 {
+        let half = choices.len() / 2;
+
+        let (first, last) = choices.split_at(half);
+
+        let a = capital_letter(&first.concat());
+        let b = capital_letter(&last.concat());
+
+        format!("{} {}", a, b)
+    } else {
+        capital_letter(&choices.concat())
+    }
+}
+
+fn capital_letter(word: &str) -> String {
+    let mut chars = word.chars(); // UTF-8, not single bytes!
+    match chars.next() {
+        None => String::new(),
+        Some(before) => before.to_uppercase().collect::<String>() + chars.as_str(),
+    }
+}
+
+// implementing a Markov Model; make_name will be deprecated
+use std::collections::HashMap;
+
+const HOT_CORPUS: &[&str] = &[
+    "ignis", "terrax", "vulkan", "roggen", "rockas", "montan", "magma", "surt", "drak", "trok",
+    "pyra", "skor", "rax", "kill", "geo", "morfo", "vex", "heiss", "foyr", "khor", "kryx",
+    "ferrum", "cinder", "pyre", "solis", "krag", "obsidian", "ember", "caldera", "sulfur",
+    "therma", "basalt", "scorch", "ignar", "molten", "ashen",
+];
+
+const COLD_CORPUS: &[&str] = &[
+    "kalt", "cold", "vern", "wint", "ymir", "frost", "cryo", "boreas", "glacis", "weiss", "fenrir",
+    "hel", "heim", "bjorn", "skol", "fjord", "svart", "vinter", "isbjorn", "uppsal", "frost",
+    "tundra", "cryos", "nimbus", "kald", "glacier", "rime", "svalbard", "hyperion", "arctic",
+    "hail", "shiver", "winter", "frozen", "mist",
+];
+
+const MILD_CORPUS: &[&str] = &[
+    "geas", "aralia", "floral", "sylva", "lunala", "solis", "velaris", "oceanis", "tever", "valen",
+    "orelia", "elysia", "aeloria", "iovis", "mars", "jupiter", "venus", "proxim", "garden", "ulif",
+    "verdant", "silva", "zephyr", "lyra", "nova", "gaia", "terran", "aurelia", "meadow", "cascade",
+    "halcyon", "calypso", "arcadia", "eden", "flora",
+];
+
+const SUFFIXES: &[&str] = &[
+    "I", "II", "III", "IV", "V", "VI", "VII", "IX", "X", "Prime", "Major", "Minor", "Alpha",
+    "Beta", "Gamma", "Delta", "Ultima",
+];
+
+pub struct MarkovModel {
+    transitions: HashMap<char, Vec<char>>,
+    // given a two-char window, give me the third one
+}
+
+impl MarkovModel {
+    pub fn train(corpus: &[&str]) -> Self {
+        let mut transitions: HashMap<char, Vec<char>> = HashMap::new();
+
+        for word in corpus {
+            let padded = format!("^{}$", word.to_lowercase()); // add tags for initial-final letters 
+            let chars: Vec<char> = padded.chars().collect(); // create iterable of chars for every word
+
+            for window in chars.windows(2) {
+                // take a window of 3 chars
+                let state = window[0]; // use the first two as reference
+                let next = window[1]; // use the last as info 
+
+                transitions.entry(state).or_default().push(next); // store the data
+            }
+        }
+
+        Self { transitions }
+    }
+
+    pub fn generate(&self, min_len: usize, max_len: usize) -> String {
+        let mut rng = rand::rng();
+        let mut word = String::new();
+        let mut state = '^'; // initial state
+
+        while let Some(choices) = self.transitions.get(&state) {
+            let &next = choices.choose(&mut rng).unwrap();
+
+            // if it chooses '$' word ends
+            if next == '$' {
+                // if it's not long enough given alternatives
+                if word.chars().count() < min_len && choices.len() > 1 {
+                    continue;
+                }
+                break;
+            }
+
+            word.push(next);
+            state = next; // new state is previous with the letter chosen before 
+
+            if word.chars().count() >= max_len {
+                break;
+            }
+        }
+
+        capital_letter(&word)
+    }
+}
+
+pub struct NameGenerator {
+    hot: MarkovModel,
+    cold: MarkovModel,
+    mild: MarkovModel,
+}
+
+impl NameGenerator {
+    pub fn new() -> Self {
+        Self {
+            hot: MarkovModel::train(HOT_CORPUS),
+            cold: MarkovModel::train(COLD_CORPUS),
+            mild: MarkovModel::train(MILD_CORPUS),
+        }
+    }
+
+    pub fn make_name(&self, climate_class: u8) -> String {
+        let mut rng = rand::rng();
+        let model = match climate_class {
+            1 => &self.hot,
+            2 => &self.cold,
+            _ => &self.mild,
+        };
+
+        let base_name = model.generate(4, 7);
+
+        match rand::random_range(0..10) {
+            0..=2 => {
+                let suffix = SUFFIXES.choose(&mut rng).unwrap();
+                format!("{}-{}", base_name, suffix)
+            }
+            3..=5 => {
+                let second = model.generate(4, 6);
+                format!("{} {}", base_name, second)
+            }
+            6..=7 => {
+                let letter = (rand::random_range(65..=90) as u8) as char;
+                let code = rand::random_range(10..99);
+                format!("{}-{} {}", letter, code, base_name)
+            }
+            _ => base_name,
+        }
+    }
+}
+
+==> meta/recipes.json <==
+[
+  {
+    "product": {"Uti": "Canister"},
+    "ingredients": [
+      {"Mat": "Plastic"},
+      {"Mat": "Oil"}
+    ],
+    "quantity": 1
+  },
+  {
+    "product": {"Uti": "Harvester"},
+    "ingredients": [
+      {"Ele": "Iron"},
+      {"Mat": "Wood"},
+      {"Mat": "Fiber"}
+    ],
+    "quantity": 1
+  }
+]
+
+==> saves/state.json <==
+{
+  "current_id": 3,
+  "current_planet": 0,
+  "current_name": "Earth",
+  "fuel": 100,
+  "vigor": 0,
+  "inventory": {
+    "materials": {
+      "Oil": 9,
+      "Wood": 10,
+      "Stone": 20,
+      "Fiber": 50,
+      "Plastic": 9
+    },
+    "elements": {
+      "Hydrogen": 2,
+      "Argon": 0,
+      "Iron": 2,
+      "Titanium": 1,
+      "Uranium": 1,
+      "Silicon": 0
+    },
+    "misc": {},
+    "utils": {
+      "Fruit": 0,
+      "Harvester": 1,
+      "Canister": 0
+    }
+  }
+}

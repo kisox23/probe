@@ -1,24 +1,23 @@
 {
   "id": 3,
-  "name": "Wolek Aikara",
+  "name": "Pyroro Rober",
   "class": "Lush",
-  "climate": "Littoral",
-  "temperature": 27,
+  "climate": "Burning",
+  "temperature": 73,
   "elements": {
-    "Uranium": 4.9589863,
-    "Helium": 15.501688,
-    "Silicon": 19.004099,
-    "Argon": 1.5487567,
-    "Iron": 22.149921,
-    "Nitrogen": 10.034539,
-    "Titanium": 13.358873,
-    "Hydrogen": 13.443138
+    "Iron": 28.67595,
+    "Argon": 4.0627146,
+    "Titanium": 11.940601,
+    "Uranium": 2.8957872,
+    "Silicon": 19.508036,
+    "Hydrogen": 14.78742,
+    "Helium": 12.697426,
+    "Nitrogen": 5.432064
   },
   "materials": [
     "Wood",
-    "Stone",
     "Dust",
     "Plastic"
   ],
-  "inhabitated": true
+  "inhabitated": false
 }

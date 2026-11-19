@@ -1,0 +1,19 @@
+[
+  {
+    "product": {"Uti": "Canister"},
+    "ingredients": [
+      {"Mat": "Plastic"},
+      {"Mat": "Oil"}
+    ],
+    "quantity": 1
+  },
+  {
+    "product": {"Uti": "Harvester"},
+    "ingredients": [
+      {"Ele": "Iron"},
+      {"Mat": "Wood"},
+      {"Mat": "Fiber"}
+    ],
+    "quantity": 1
+  }
+]
